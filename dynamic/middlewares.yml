@@ -1,0 +1,119 @@
+# =============================================================================
+# binhex-lab-edgegw - Dynamic Middleware Configuration
+# =============================================================================
+
+http:
+  middlewares:
+    # -------------------------------------------------------------------------
+    # Redirect HTTP to HTTPS
+    # -------------------------------------------------------------------------
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    # -------------------------------------------------------------------------
+    # Dashboard Basic Auth
+    # -------------------------------------------------------------------------
+    # Default credentials: admin / changeme
+    # Generate new: htpasswd -nB admin
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "admin:$2y$05$LhayLxezLhK6oVGKVpW9zO4b5kDGBc5kW5bZr7bFkMvSQ7s2LbOai"
+        removeHeader: true
+
+    # -------------------------------------------------------------------------
+    # Security Headers
+    # -------------------------------------------------------------------------
+    security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          X-Robots-Tag: "noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+          X-Powered-By: ""
+          Server: ""
+
+    # -------------------------------------------------------------------------
+    # HSTS Headers (Strict Transport Security)
+    # -------------------------------------------------------------------------
+    hsts:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+
+    # -------------------------------------------------------------------------
+    # Rate Limiting
+    # -------------------------------------------------------------------------
+    rate-limit-default:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    rate-limit-strict:
+      rateLimit:
+        average: 20
+        burst: 10
+        period: 1m
+
+    # -------------------------------------------------------------------------
+    # IP Whitelist (example - customize as needed)
+    # -------------------------------------------------------------------------
+    ip-whitelist-private:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"
+          - "10.0.0.0/8"
+          - "172.16.0.0/12"
+          - "192.168.0.0/16"
+
+    # -------------------------------------------------------------------------
+    # Compress Response
+    # -------------------------------------------------------------------------
+    compress:
+      compress:
+        excludedContentTypes:
+          - "text/event-stream"
+
+    # -------------------------------------------------------------------------
+    # Strip Path Prefix (for path-based routing)
+    # -------------------------------------------------------------------------
+    strip-prefix-api:
+      stripPrefix:
+        prefixes:
+          - "/api"
+        forceSlash: false
+
+    # -------------------------------------------------------------------------
+    # Add Prefix
+    # -------------------------------------------------------------------------
+    add-prefix-api:
+      addPrefix:
+        prefix: "/api"
+
+    # -------------------------------------------------------------------------
+    # Retry on failure
+    # -------------------------------------------------------------------------
+    retry-default:
+      retry:
+        attempts: 3
+        initialInterval: 100ms
+
+    # -------------------------------------------------------------------------
+    # Circuit Breaker
+    # -------------------------------------------------------------------------
+    circuit-breaker:
+      circuitBreaker:
+        expression: "NetworkErrorRatio() > 0.5 || ResponseCodeRatio(500, 600, 0, 600) > 0.5"
+        checkPeriod: 10s
+        fallbackDuration: 30s
+        recoveryDuration: 60s

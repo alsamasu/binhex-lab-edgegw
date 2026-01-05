@@ -1,0 +1,196 @@
+generated_at: "2026-01-05T05:54:50.017751Z"
+
+summary:
+  total_containers: 24
+  reverse_proxies_detected: 1
+  by_classification:
+    exposed_directly: 5
+    internal_only: 8
+    already_proxied_traefik: 11
+  migration_candidates: 3
+
+reverse_proxies:
+  - container_id: "80d969277969"
+    container_name: binhex-edge-proxy
+    image: traefik:v3.2
+    status: running
+    networks:
+      - binhex-network
+    published_ports:
+      "443/tcp":
+        - "0.0.0.0:443"
+        - ":::443"
+      "80/tcp":
+        - "0.0.0.0:80"
+        - ":::80"
+
+migration_candidates:
+  - container_id: "2845187f6ce0"
+    container_name: phpipam-web
+    image: phpipam/phpipam-www:latest
+    status: running
+    networks:
+      - phpipam-network
+    published_ports:
+      "80/tcp":
+        - "0.0.0.0:8080"
+        - ":::8080"
+    classification: exposed_directly
+    migration_reason: "HTTP service exposed directly - good migration candidate"
+    recommended_labels:
+      traefik.enable: "true"
+      traefik.http.routers.phpipam_web.rule: "Host(`phpipam-web.local`)"
+      traefik.http.routers.phpipam_web.entrypoints: websecure
+      traefik.http.routers.phpipam_web.tls: "true"
+      traefik.http.services.phpipam_web.loadbalancer.server.port: "80"
+    recommended_hostnames:
+      - phpipam-web.local
+
+  - container_id: "cc7e3dfecad2"
+    container_name: phpipam-cron
+    image: phpipam/phpipam-cron:latest
+    status: running
+    networks:
+      - phpipam-network
+    classification: internal_only
+    migration_reason: "Internal HTTP service - could benefit from proxy exposure"
+    recommended_labels:
+      traefik.enable: "true"
+      traefik.http.routers.phpipam_cron.rule: "Host(`phpipam-cron.local`)"
+      traefik.http.routers.phpipam_cron.entrypoints: websecure
+      traefik.http.routers.phpipam_cron.tls: "true"
+      traefik.http.services.phpipam_cron.loadbalancer.server.port: "80"
+    recommended_hostnames:
+      - phpipam-cron.local
+
+  - container_id: "834b34ed14b5"
+    container_name: mkdocs-serve
+    image: python:3.11-slim
+    status: running
+    networks:
+      - bridge
+    published_ports:
+      "8000/tcp":
+        - "0.0.0.0:8888"
+        - ":::8888"
+    classification: exposed_directly
+    migration_reason: "HTTP service exposed directly - good migration candidate"
+    recommended_labels:
+      traefik.enable: "true"
+      traefik.http.routers.mkdocs_serve.rule: "Host(`mkdocs-serve.local`)"
+      traefik.http.routers.mkdocs_serve.entrypoints: websecure
+      traefik.http.routers.mkdocs_serve.tls: "true"
+      traefik.http.services.mkdocs_serve.loadbalancer.server.port: "8000"
+    recommended_hostnames:
+      - mkdocs-serve.local
+
+already_proxied:
+  - container_name: binhex-ops-api
+    proxy: traefik
+    router: api-admin-ops
+    host: binhex.app
+    path: /api/admin/ops
+
+  - container_name: binhex-web
+    proxy: traefik
+    router: web
+    host: binhex.app
+    path: /
+
+  - container_name: binhex-api
+    proxy: traefik
+    router: api-main
+    host: binhex.app
+    path: /api/main
+
+  - container_name: binhex-events-service
+    proxy: traefik
+    router: api-events
+    host: binhex.app
+    path: /api/events
+
+  - container_name: binhex-worker
+    proxy: traefik
+    router: api-ops
+    host: binhex.app
+    path: /api/ops
+
+  - container_name: binhex-lfg-service
+    proxy: traefik
+    router: api-lfg
+    host: binhex.app
+    path: /api/lfg
+
+  - container_name: engagement-service
+    proxy: traefik
+    router: api-engagement
+    host: binhex.app
+    path: /api/engagement
+
+  - container_name: policy-service
+    proxy: traefik
+    router: api-policy
+    host: binhex.app
+    path: /api/policy
+
+  - container_name: binhex-enforcement
+    proxy: traefik
+    router: api-enforce
+    host: binhex.app
+    path: /api/enforce
+
+  - container_name: binhex-config-api
+    proxy: traefik
+    router: api-config
+    host: binhex.app
+    path: /api/config
+
+  - container_name: binhex-data-api
+    proxy: traefik
+    router: api-data
+    host: binhex.app
+    path: /api/data
+
+internal_only:
+  - container_name: serene_engelbart
+    image: mcp/docker
+    reason: "MCP Docker helper - no HTTP"
+
+  - container_name: phpipam-db
+    image: mariadb:10.11
+    reason: "Database service"
+
+  - container_name: binhex-bot
+    image: binhex-stack-bot:latest
+    reason: "Discord bot - no HTTP"
+
+  - container_name: binhex-db
+    image: postgres:15-alpine
+    reason: "Database service"
+
+  - container_name: binhex-redis
+    image: redis:7-alpine
+    reason: "Cache service"
+
+  - container_name: binhex-dev
+    image: binhex-llmiface-stack-dev
+    reason: "Development container"
+
+  - container_name: binhex-mcp
+    image: binhex-llmiface-stack-mcp
+    reason: "MCP stdio proxy"
+
+exposed_non_http:
+  - container_name: pykmip-server
+    port: 5696
+    protocol: KMIP
+    reason: "Key management protocol - not HTTP"
+
+  - container_name: binhex-tools
+    port: 8788
+    reason: "MCP tools service - internal API"
+
+  - container_name: cisco-console
+    port: 2001
+    protocol: Serial/Telnet
+    reason: "Console server bridge - not HTTP"

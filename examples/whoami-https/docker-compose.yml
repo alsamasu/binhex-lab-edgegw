@@ -1,0 +1,49 @@
+version: "3.9"
+
+# =============================================================================
+# whoami-https - Example HTTPS Service for binhex-lab-edgegw
+# =============================================================================
+# This example demonstrates how to route an HTTPS service with TLS through
+# the binhex-lab-edgegw Traefik instance.
+#
+# Usage:
+#   cd examples/whoami-https
+#   docker compose up -d
+#
+# Test (with self-signed cert warning):
+#   curl -k -H "Host: whoami-secure.local" https://localhost:8443
+#
+# Note: This service is attached ONLY to binhex-lab-edgegw network.
+# =============================================================================
+
+services:
+  whoami:
+    image: traefik/whoami:latest
+    container_name: whoami-https
+    restart: unless-stopped
+    networks:
+      - binhex-lab-edgegw
+    labels:
+      # Enable Traefik routing
+      - "traefik.enable=true"
+      
+      # HTTPS Router (with TLS)
+      - "traefik.http.routers.whoami-https.rule=Host(`whoami-secure.local`)"
+      - "traefik.http.routers.whoami-https.entrypoints=websecure"
+      - "traefik.http.routers.whoami-https.tls=true"
+      - "traefik.http.routers.whoami-https.service=whoami-https"
+      
+      # Apply security headers middleware
+      - "traefik.http.routers.whoami-https.middlewares=security-headers@file"
+      
+      # Service definition
+      - "traefik.http.services.whoami-https.loadbalancer.server.port=80"
+      
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.whoami-https-redirect.rule=Host(`whoami-secure.local`)"
+      - "traefik.http.routers.whoami-https-redirect.entrypoints=web"
+      - "traefik.http.routers.whoami-https-redirect.middlewares=redirect-to-https@file"
+
+networks:
+  binhex-lab-edgegw:
+    external: true

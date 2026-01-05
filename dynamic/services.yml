@@ -1,0 +1,38 @@
+# =============================================================================
+# binhex-lab-edgegw - Service Definitions
+# =============================================================================
+# Define services here for non-Docker backends or external services.
+# Docker containers with labels are auto-discovered and don't need entries here.
+# =============================================================================
+
+http:
+  services:
+    # -------------------------------------------------------------------------
+    # Example: External Service
+    # -------------------------------------------------------------------------
+    # external-api:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://192.168.1.100:8080"
+    #     healthCheck:
+    #       path: /health
+    #       interval: 10s
+    #       timeout: 3s
+
+    # -------------------------------------------------------------------------
+    # Example: Weighted Load Balancing
+    # -------------------------------------------------------------------------
+    # weighted-service:
+    #   weighted:
+    #     services:
+    #       - name: service-v1
+    #         weight: 80
+    #       - name: service-v2
+    #         weight: 20
+
+    # -------------------------------------------------------------------------
+    # Placeholder: No external services configured
+    # -------------------------------------------------------------------------
+    noop:
+      loadBalancer:
+        servers: []

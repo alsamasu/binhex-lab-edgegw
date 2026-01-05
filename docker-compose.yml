@@ -1,0 +1,72 @@
+version: "3.9"
+
+# =============================================================================
+# binhex-lab-edgegw - Purpose-Built Edge Gateway
+# =============================================================================
+# This is a NEW, separate Traefik instance that does NOT interfere with
+# any existing reverse proxies (like binhex-edge-proxy on binhex-network).
+#
+# Key features:
+# - Separate network: binhex-lab-edgegw
+# - Alternative ports to avoid conflicts: 8080 (web), 8443 (websecure)
+# - File provider for dynamic configuration
+# - ACME support with staging toggle
+# - Secure dashboard with basic auth
+# =============================================================================
+
+services:
+  traefik:
+    image: traefik:v3.2
+    container_name: binhex-lab-edgegw-traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      # Use alternative ports to avoid conflict with existing proxy on 80/443
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"
+    environment:
+      - TZ=${TZ:-UTC}
+    volumes:
+      # Docker socket for container discovery
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Static configuration
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      # Dynamic configuration (middlewares, routers, etc.)
+      - ./dynamic:/etc/traefik/dynamic:ro
+      # ACME certificate storage
+      - acme_data:/etc/traefik/acme
+      # Self-signed certs for offline/dev use
+      - ./certs:/etc/traefik/certs:ro
+    networks:
+      - binhex-lab-edgegw
+    labels:
+      # Dashboard routing (secure)
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${DASHBOARD_HOST:-traefik.local}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@file"
+      # HTTP -> HTTPS redirect for dashboard
+      - "traefik.http.routers.dashboard-http.rule=Host(`${DASHBOARD_HOST:-traefik.local}`)"
+      - "traefik.http.routers.dashboard-http.entrypoints=web"
+      - "traefik.http.routers.dashboard-http.middlewares=redirect-to-https@file"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  binhex-lab-edgegw:
+    name: binhex-lab-edgegw
+    driver: bridge
+    # External: false means this compose creates the network
+    # Set to true if you pre-create it externally
+    external: false
+
+volumes:
+  acme_data:
+    name: binhex-lab-edgegw-acme
