@@ -1,0 +1,43 @@
+# =============================================================================
+# binhex-lab-edgegw - TLS Configuration
+# =============================================================================
+
+tls:
+  # ---------------------------------------------------------------------------
+  # TLS Options
+  # ---------------------------------------------------------------------------
+  options:
+    default:
+      minVersion: VersionTLS12
+      # Disable strict SNI for local development (allows default cert fallback)
+      sniStrict: false
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+
+    modern:
+      minVersion: VersionTLS13
+
+    # Strict option for production use
+    strict:
+      minVersion: VersionTLS12
+      sniStrict: true
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+
+  # ---------------------------------------------------------------------------
+  # Default Certificate Store
+  # ---------------------------------------------------------------------------
+  stores:
+    default:
+      defaultGeneratedCert:
+        resolver: le
+        domain:
+          main: "local"

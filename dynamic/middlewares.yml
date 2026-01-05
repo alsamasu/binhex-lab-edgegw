@@ -1,31 +1,30 @@
 # =============================================================================
-# binhex-lab-edgegw - Dynamic Middleware Configuration
+# Unified Traefik Middleware Configuration
+# Merged from lab + prod environments
 # =============================================================================
 
 http:
   middlewares:
-    # -------------------------------------------------------------------------
-    # Redirect HTTP to HTTPS
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # REDIRECT HTTP -> HTTPS
+    # =========================================================================
     redirect-to-https:
       redirectScheme:
         scheme: https
         permanent: true
 
-    # -------------------------------------------------------------------------
-    # Dashboard Basic Auth
-    # -------------------------------------------------------------------------
-    # Default credentials: admin / changeme
-    # Generate new: htpasswd -nB admin
+    # =========================================================================
+    # DASHBOARD AUTH (admin / changeme)
+    # =========================================================================
     dashboard-auth:
       basicAuth:
         users:
-          - "admin:$2y$05$LhayLxezLhK6oVGKVpW9zO4b5kDGBc5kW5bZr7bFkMvSQ7s2LbOai"
+          - "admin:$2y$05$UhnSAtstWkpt3XeECHpS9..tBt4uvoqxdHnJHx63ywYp7LDfnm8Gm"
         removeHeader: true
 
-    # -------------------------------------------------------------------------
-    # Security Headers
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # SECURITY HEADERS
+    # =========================================================================
     security-headers:
       headers:
         browserXssFilter: true
@@ -34,15 +33,25 @@ http:
         stsIncludeSubdomains: true
         stsPreload: true
         stsSeconds: 31536000
+        referrerPolicy: "strict-origin-when-cross-origin"
         customFrameOptionsValue: "SAMEORIGIN"
         customResponseHeaders:
           X-Robots-Tag: "noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
           X-Powered-By: ""
           Server: ""
 
-    # -------------------------------------------------------------------------
-    # HSTS Headers (Strict Transport Security)
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # PROXY HEADERS (for apps behind reverse proxy)
+    # =========================================================================
+    proxy-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Ssl: "on"
+
+    # =========================================================================
+    # HSTS HEADERS
+    # =========================================================================
     hsts:
       headers:
         stsSeconds: 31536000
@@ -50,13 +59,25 @@ http:
         stsPreload: true
         forceSTSHeader: true
 
-    # -------------------------------------------------------------------------
-    # Rate Limiting
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # RATE LIMITING
+    # =========================================================================
     rate-limit-default:
       rateLimit:
         average: 100
         burst: 50
+        period: 1m
+
+    rate-limit-public:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    rate-limit-admin:
+      rateLimit:
+        average: 30
+        burst: 10
         period: 1m
 
     rate-limit-strict:
@@ -65,9 +86,9 @@ http:
         burst: 10
         period: 1m
 
-    # -------------------------------------------------------------------------
-    # IP Whitelist (example - customize as needed)
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # IP WHITELIST
+    # =========================================================================
     ip-whitelist-private:
       ipAllowList:
         sourceRange:
@@ -76,44 +97,87 @@ http:
           - "172.16.0.0/12"
           - "192.168.0.0/16"
 
-    # -------------------------------------------------------------------------
-    # Compress Response
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # COMPRESS RESPONSES
+    # =========================================================================
     compress:
       compress:
         excludedContentTypes:
           - "text/event-stream"
 
-    # -------------------------------------------------------------------------
-    # Strip Path Prefix (for path-based routing)
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # PATH STRIPPING (prod API routes)
+    # =========================================================================
+    strip-api-main:
+      stripPrefix:
+        prefixes:
+          - "/api/main"
+
+    strip-api-config:
+      stripPrefix:
+        prefixes:
+          - "/api/config"
+
+    strip-api-data:
+      stripPrefix:
+        prefixes:
+          - "/api/data"
+
+    strip-api-policy:
+      stripPrefix:
+        prefixes:
+          - "/api/policy"
+
+    strip-api-enforce:
+      stripPrefix:
+        prefixes:
+          - "/api/enforce"
+
+    strip-api-events:
+      stripPrefix:
+        prefixes:
+          - "/api/events"
+
+    strip-api-engagement:
+      stripPrefix:
+        prefixes:
+          - "/api/engagement"
+
+    strip-api-lfg:
+      stripPrefix:
+        prefixes:
+          - "/api/lfg"
+
+    strip-api-ops:
+      stripPrefix:
+        prefixes:
+          - "/api/ops"
+
+    strip-api-admin-ops:
+      stripPrefix:
+        prefixes:
+          - "/api/admin/ops"
+
+    strip-admin:
+      stripPrefix:
+        prefixes:
+          - "/admin"
+
     strip-prefix-api:
       stripPrefix:
         prefixes:
           - "/api"
         forceSlash: false
 
-    # -------------------------------------------------------------------------
-    # Add Prefix
-    # -------------------------------------------------------------------------
-    add-prefix-api:
-      addPrefix:
-        prefix: "/api"
-
-    # -------------------------------------------------------------------------
-    # Retry on failure
-    # -------------------------------------------------------------------------
-    retry-default:
+    # =========================================================================
+    # RETRY ON FAILURE
+    # =========================================================================
+    retry:
       retry:
         attempts: 3
         initialInterval: 100ms
 
-    # -------------------------------------------------------------------------
-    # Circuit Breaker
-    # -------------------------------------------------------------------------
-    circuit-breaker:
-      circuitBreaker:
-        expression: "NetworkErrorRatio() > 0.5 || ResponseCodeRatio(500, 600, 0, 600) > 0.5"
-        checkPeriod: 10s
-        fallbackDuration: 30s
-        recoveryDuration: 60s
+    retry-default:
+      retry:
+        attempts: 3
+        initialInterval: 100ms
